@@ -15,19 +15,24 @@ import { NextOverpassPanel } from './components/NextOverpassPanel';
 import { GlobeClickHandler } from './components/GlobeClickHandler';
 import { ClockController } from './components/ClockController';
 import { CoverageLayer } from './components/CoverageLayer';
+import { LoadingOverlay } from './components/LoadingOverlay';
+import { ErrorScreen } from './components/ErrorScreen';
+import { StaleTLEBanner } from './components/StaleTLEBanner';
+import { MobileFallback } from './components/MobileFallback';
+import { Legend } from './components/Legend';
 
 import { computeSatInfo } from './lib/satInfo';
 import { findNextPass } from './lib/overpass';
 import type { OverpassResult } from './lib/overpass';
 
-Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_ION_TOKEN;
+Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_ION_TOKEN as string;
 
 export default function App() {
-  // --- Data ---
-  const { satellites, loading, error } = useSatellites();
+  // ── Data ────────────────────────────────────────────────────────────────
+  const { satellites, loading, error, isStale, latestEpoch, refetch } = useSatellites();
   const satellitePositions = useSatellitePositions(satellites);
 
-  // --- Satellite info panel (click on entity) ---
+  // ── Satellite info panel (click entity) ─────────────────────────────────
   const [selectedInfo, setSelectedInfo] = useState<{
     sp: SatellitePosition;
     info: ReturnType<typeof computeSatInfo>;
@@ -42,25 +47,24 @@ export default function App() {
     });
   }, []);
 
-  // --- Toolbar mode ---
+  // ── Toolbar mode ────────────────────────────────────────────────────────
   const [mode, setMode] = useState<AppMode>('normal');
 
-  // --- Next Overpass ---
+  // ── Next Overpass ────────────────────────────────────────────────────────
   const [overpassTarget, setOverpassTarget] = useState<{ lat: number; lon: number } | null>(null);
   const [overpassResults, setOverpassResults] = useState<OverpassResult[]>([]);
   const [computingOverpass, setComputingOverpass] = useState(false);
 
   const handleGlobePick = useCallback((lat: number, lon: number) => {
     setOverpassTarget({ lat, lon });
-    setMode('normal'); // exit pick mode after selection
+    setMode('normal');
   }, []);
 
-  // Recompute passes whenever target or TLE data changes
   useEffect(() => {
     if (!overpassTarget || satellitePositions.length === 0) return;
     setComputingOverpass(true);
     setOverpassResults([]);
-    const timerId = setTimeout(() => {
+    const id = setTimeout(() => {
       const now = new Date();
       const results = satellitePositions
         .map(({ tle, satrec }) =>
@@ -71,24 +75,30 @@ export default function App() {
       setOverpassResults(results);
       setComputingOverpass(false);
     }, 0);
-    return () => clearTimeout(timerId);
+    return () => clearTimeout(id);
   }, [overpassTarget, satellitePositions]);
 
-  // --- Coverage heatmap ---
+  // ── Coverage heatmap ─────────────────────────────────────────────────────
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [computingHeatmap, setComputingHeatmap] = useState(false);
 
-  // --- Historical mode ---
+  // ── Historical mode ───────────────────────────────────────────────────────
   const [historicalDate, setHistoricalDate] = useState('');
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  if (error) return <ErrorScreen message={error} onRetry={refetch} />;
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-      {/* Status banners */}
-      {loading && <div style={bannerStyle}>Loading TLEs…</div>}
-      {error && <div style={{ ...bannerStyle, color: '#f87171' }}>TLE fetch failed: {error}</div>}
-      {computingHeatmap && <div style={bannerStyle}>Computing 7-day coverage…</div>}
+      <MobileFallback />
+      <LoadingOverlay visible={loading} />
 
-      {/* Toolbar (top-left) */}
+      {isStale && latestEpoch && <StaleTLEBanner epochDate={latestEpoch} />}
+
+      {computingHeatmap && (
+        <div style={bannerStyle}>Computing 7-day coverage map…</div>
+      )}
+
       <Toolbar
         mode={mode}
         showHeatmap={showHeatmap}
@@ -99,7 +109,6 @@ export default function App() {
         onDateReset={() => setHistoricalDate('')}
       />
 
-      {/* Satellite info panel (top-right) */}
       {selectedInfo && (
         <SatelliteInfoPanel
           info={selectedInfo.info}
@@ -108,7 +117,6 @@ export default function App() {
         />
       )}
 
-      {/* Next overpass panel (bottom-left) */}
       {overpassTarget && (
         <NextOverpassPanel
           targetLat={overpassTarget.lat}
@@ -119,8 +127,9 @@ export default function App() {
         />
       )}
 
+      <Legend />
+
       <Viewer full shouldAnimate>
-        {/* Cesium-context components (use useCesium internally) */}
         <GlobeClickHandler active={mode === 'pickingLocation'} onPick={handleGlobePick} />
         {historicalDate && <ClockController isoDate={historicalDate} />}
         <CoverageLayer
@@ -129,7 +138,6 @@ export default function App() {
           onComputingChange={setComputingHeatmap}
         />
 
-        {/* Reference marker */}
         <Entity
           name="Gdańsk"
           position={Cartesian3.fromDegrees(18.6466, 54.352, 100)}
@@ -137,7 +145,6 @@ export default function App() {
           description="Gdańsk University of Technology"
         />
 
-        {/* Overpass target pin */}
         {overpassTarget && (
           <Entity
             name="Overpass Target"
@@ -157,7 +164,6 @@ export default function App() {
           />
         )}
 
-        {/* Satellites + swaths */}
         <SatelliteEntities
           satellitePositions={satellitePositions}
           onSelect={handleSelectSatellite}
@@ -172,11 +178,12 @@ const bannerStyle: React.CSSProperties = {
   top: 12,
   left: '50%',
   transform: 'translateX(-50%)',
-  background: 'rgba(0,0,0,0.75)',
+  background: 'rgba(0,0,0,0.78)',
   color: '#fff',
   padding: '6px 14px',
   borderRadius: 6,
   fontSize: 13,
+  fontFamily: 'sans-serif',
   zIndex: 30,
   pointerEvents: 'none',
 };
