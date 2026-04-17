@@ -23,36 +23,38 @@ export function Toolbar({
 
   return (
     <div style={toolbarStyle}>
-      {/* Next Overpass button */}
       <button
         onClick={() => onModeChange(picking ? 'normal' : 'pickingLocation')}
         style={btnStyle(picking)}
-        title="Click a location on the globe to find the next Sentinel pass"
+        title="Click a point on the globe to compute the next Sentinel-1 and Sentinel-2 overpass for that location (5-day lookahead)"
+        aria-pressed={picking}
       >
-        📍 Next Pass {picking ? '(pick location…)' : ''}
+        📍 {picking ? 'Click the globe…' : 'Next Pass'}
       </button>
 
-      {/* Coverage Heatmap toggle */}
       <button
         onClick={onHeatmapToggle}
         style={btnStyle(showHeatmap)}
-        title="Show 7-day revisit coverage heatmap"
+        title="Overlay a 7-day revisit-frequency heatmap: blue = rarely covered, red = frequently covered"
+        aria-pressed={showHeatmap}
       >
         🗺️ Coverage
       </button>
 
-      {/* Historical mode date picker */}
-      <div style={dateGroupStyle}>
+      <div
+        style={dateGroupStyle}
+        title="Jump to a specific UTC date/time — the globe will show satellite positions at that moment"
+      >
         <span style={{ color: '#94a3b8', fontSize: 11 }}>🕐</span>
         <input
           type="datetime-local"
           value={historicalDate}
           onChange={(e) => onDateChange(e.target.value)}
           style={dateInputStyle}
-          title="Jump to a specific date/time"
+          aria-label="Historical date/time"
         />
         {historicalDate && (
-          <button onClick={onDateReset} style={resetBtnStyle} title="Return to live">
+          <button onClick={onDateReset} style={resetBtnStyle} title="Return to live real-time mode">
             ↩ Live
           </button>
         )}
@@ -74,16 +76,17 @@ const toolbarStyle: React.CSSProperties = {
 function btnStyle(active: boolean): React.CSSProperties {
   return {
     background: active ? 'rgba(99, 102, 241, 0.85)' : 'rgba(10, 15, 28, 0.85)',
-    border: '1px solid rgba(255,255,255,0.15)',
+    border: `1px solid ${active ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.12)'}`,
     borderRadius: 7,
     color: active ? '#fff' : '#cbd5e1',
-    padding: '7px 12px',
+    padding: '8px 13px',
     fontSize: 12,
     fontFamily: 'sans-serif',
     cursor: 'pointer',
     backdropFilter: 'blur(6px)',
-    transition: 'background 0.15s',
+    transition: 'background 0.15s, border-color 0.15s',
     textAlign: 'left' as const,
+    minWidth: 140,
   };
 }
 
@@ -92,9 +95,9 @@ const dateGroupStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: 6,
   background: 'rgba(10, 15, 28, 0.85)',
-  border: '1px solid rgba(255,255,255,0.15)',
+  border: '1px solid rgba(255,255,255,0.12)',
   borderRadius: 7,
-  padding: '6px 10px',
+  padding: '7px 10px',
   backdropFilter: 'blur(6px)',
 };
 
@@ -106,6 +109,7 @@ const dateInputStyle: React.CSSProperties = {
   fontFamily: 'sans-serif',
   outline: 'none',
   cursor: 'pointer',
+  minWidth: 148,
 };
 
 const resetBtnStyle: React.CSSProperties = {
@@ -113,6 +117,8 @@ const resetBtnStyle: React.CSSProperties = {
   border: 'none',
   color: '#f97316',
   fontSize: 11,
+  fontFamily: 'sans-serif',
   cursor: 'pointer',
   padding: '0 2px',
+  whiteSpace: 'nowrap' as const,
 };

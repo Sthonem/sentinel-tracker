@@ -1,6 +1,18 @@
 import type { SatelliteInfo } from '../lib/satInfo';
 import type { SatelliteFamily } from '../types/satellite';
 
+/** Hint shown in the top-right area before any satellite is selected. */
+export function SatelliteInfoHint() {
+  return (
+    <div style={{ ...panelStyle, textAlign: 'center', padding: '14px 16px' }}>
+      <div style={{ fontSize: 22, marginBottom: 8 }}>🛰️</div>
+      <p style={{ color: '#64748b', fontSize: 11, fontFamily: 'sans-serif', lineHeight: 1.5, margin: 0 }}>
+        Click a satellite on the globe to view its details.
+      </p>
+    </div>
+  );
+}
+
 const FAMILY_LABEL: Record<SatelliteFamily, string> = {
   'SENTINEL-1': 'SAR (C-band)',
   'SENTINEL-2': 'MSI (optical)',

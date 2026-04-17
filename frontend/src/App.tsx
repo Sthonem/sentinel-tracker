@@ -8,7 +8,7 @@ import { useSatellitePositions } from './hooks/useSatellitePositions';
 import type { SatellitePosition } from './hooks/useSatellitePositions';
 
 import { SatelliteEntities } from './components/SatelliteEntities';
-import { SatelliteInfoPanel } from './components/SatelliteInfoPanel';
+import { SatelliteInfoPanel, SatelliteInfoHint } from './components/SatelliteInfoPanel';
 import { Toolbar } from './components/Toolbar';
 import type { AppMode } from './components/Toolbar';
 import { NextOverpassPanel } from './components/NextOverpassPanel';
@@ -109,12 +109,14 @@ export default function App() {
         onDateReset={() => setHistoricalDate('')}
       />
 
-      {selectedInfo && (
+      {selectedInfo ? (
         <SatelliteInfoPanel
           info={selectedInfo.info}
           family={selectedInfo.sp.tle.family}
           onClose={() => setSelectedInfo(null)}
         />
+      ) : (
+        !loading && satellites.length > 0 && <SatelliteInfoHint />
       )}
 
       {overpassTarget && (
