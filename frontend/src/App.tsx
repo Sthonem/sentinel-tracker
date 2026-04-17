@@ -87,6 +87,9 @@ export default function App() {
     return () => worker.terminate();
   }, [overpassTarget, satellitePositions]);
 
+  // ── Hint dismiss ─────────────────────────────────────────────────────────
+  const [hintDismissed, setHintDismissed] = useState(false);
+
   // ── Coverage heatmap ─────────────────────────────────────────────────────
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [computingHeatmap, setComputingHeatmap] = useState(false);
@@ -125,7 +128,8 @@ export default function App() {
           onClose={() => setSelectedInfo(null)}
         />
       ) : (
-        !loading && satellites.length > 0 && <SatelliteInfoHint />
+        !loading && satellites.length > 0 && !hintDismissed &&
+        <SatelliteInfoHint onDismiss={() => setHintDismissed(true)} />
       )}
 
       {overpassTarget && (

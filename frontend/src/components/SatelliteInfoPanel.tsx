@@ -1,10 +1,25 @@
 import type { SatelliteInfo } from '../lib/satInfo';
 import type { SatelliteFamily } from '../types/satellite';
+import { useDraggable } from '../hooks/useDraggable';
+
+interface HintProps { onDismiss: () => void }
 
 /** Hint shown in the top-right area before any satellite is selected. */
-export function SatelliteInfoHint() {
+export function SatelliteInfoHint({ onDismiss }: HintProps) {
+  const { pos, onMouseDown } = useDraggable(
+    typeof window !== 'undefined' ? window.innerWidth - 256 : 900,
+    16,
+  );
+
   return (
-    <div style={{ ...panelStyle, textAlign: 'center', padding: '14px 16px' }}>
+    <div
+      data-draggable
+      onMouseDown={onMouseDown}
+      style={{ ...panelStyle, position: 'fixed', left: pos.x, top: pos.y, right: 'unset', textAlign: 'center', padding: '14px 16px', cursor: 'grab' }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+        <button onClick={onDismiss} style={closeBtnStyle} title="Kapat">✕</button>
+      </div>
       <div style={{ fontSize: 22, marginBottom: 8 }}>🛰️</div>
       <p style={{ color: '#64748b', fontSize: 11, fontFamily: 'sans-serif', lineHeight: 1.5, margin: 0 }}>
         Click a satellite on the globe to view its details.
@@ -31,9 +46,17 @@ interface Props {
 
 export function SatelliteInfoPanel({ info, family, onClose }: Props) {
   const accent = FAMILY_ACCENT[family];
+  const { pos, onMouseDown } = useDraggable(
+    typeof window !== 'undefined' ? window.innerWidth - 256 : 900,
+    16,
+  );
 
   return (
-    <div style={panelStyle}>
+    <div
+      data-draggable
+      onMouseDown={onMouseDown}
+      style={{ ...panelStyle, position: 'fixed', left: pos.x, top: pos.y, right: 'unset', cursor: 'grab' }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <div>
           <div style={{ color: accent, fontWeight: 700, fontSize: 15, letterSpacing: 0.5 }}>
