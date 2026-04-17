@@ -1,22 +1,182 @@
-import { Viewer, Entity } from 'resium'
-import { Cartesian3, Ion } from 'cesium'
-import 'cesium/Build/Cesium/Widgets/widgets.css'
+import { useState, useCallback, useEffect } from 'react';
+import { Viewer, Entity } from 'resium';
+import { Cartesian3, Color, Ion, JulianDate, LabelStyle } from 'cesium';
+import 'cesium/Build/Cesium/Widgets/widgets.css';
 
-Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_ION_TOKEN
+import { useSatellites } from './hooks/useSatellites';
+import { useSatellitePositions } from './hooks/useSatellitePositions';
+import type { SatellitePosition } from './hooks/useSatellitePositions';
 
-function App() {
+import { SatelliteEntities } from './components/SatelliteEntities';
+import { SatelliteInfoPanel } from './components/SatelliteInfoPanel';
+import { Toolbar } from './components/Toolbar';
+import type { AppMode } from './components/Toolbar';
+import { NextOverpassPanel } from './components/NextOverpassPanel';
+import { GlobeClickHandler } from './components/GlobeClickHandler';
+import { ClockController } from './components/ClockController';
+import { CoverageLayer } from './components/CoverageLayer';
+
+import { computeSatInfo } from './lib/satInfo';
+import { findNextPass } from './lib/overpass';
+import type { OverpassResult } from './lib/overpass';
+
+Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_ION_TOKEN;
+
+export default function App() {
+  // --- Data ---
+  const { satellites, loading, error } = useSatellites();
+  const satellitePositions = useSatellitePositions(satellites);
+
+  // --- Satellite info panel (click on entity) ---
+  const [selectedInfo, setSelectedInfo] = useState<{
+    sp: SatellitePosition;
+    info: ReturnType<typeof computeSatInfo>;
+  } | null>(null);
+
+  const handleSelectSatellite = useCallback((sp: SatellitePosition | null) => {
+    if (!sp) { setSelectedInfo(null); return; }
+    const now = JulianDate.toDate(JulianDate.now());
+    setSelectedInfo({
+      sp,
+      info: computeSatInfo(sp.tle.name, sp.tle.norad_id, sp.satrec, sp.tle.line1, now),
+    });
+  }, []);
+
+  // --- Toolbar mode ---
+  const [mode, setMode] = useState<AppMode>('normal');
+
+  // --- Next Overpass ---
+  const [overpassTarget, setOverpassTarget] = useState<{ lat: number; lon: number } | null>(null);
+  const [overpassResults, setOverpassResults] = useState<OverpassResult[]>([]);
+  const [computingOverpass, setComputingOverpass] = useState(false);
+
+  const handleGlobePick = useCallback((lat: number, lon: number) => {
+    setOverpassTarget({ lat, lon });
+    setMode('normal'); // exit pick mode after selection
+  }, []);
+
+  // Recompute passes whenever target or TLE data changes
+  useEffect(() => {
+    if (!overpassTarget || satellitePositions.length === 0) return;
+    setComputingOverpass(true);
+    setOverpassResults([]);
+    const timerId = setTimeout(() => {
+      const now = new Date();
+      const results = satellitePositions
+        .map(({ tle, satrec }) =>
+          findNextPass(tle.name, tle.family, satrec, overpassTarget.lat, overpassTarget.lon, now),
+        )
+        .filter((r): r is OverpassResult => r !== null)
+        .sort((a, b) => a.passTime.getTime() - b.passTime.getTime());
+      setOverpassResults(results);
+      setComputingOverpass(false);
+    }, 0);
+    return () => clearTimeout(timerId);
+  }, [overpassTarget, satellitePositions]);
+
+  // --- Coverage heatmap ---
+  const [showHeatmap, setShowHeatmap] = useState(false);
+  const [computingHeatmap, setComputingHeatmap] = useState(false);
+
+  // --- Historical mode ---
+  const [historicalDate, setHistoricalDate] = useState('');
+
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
-      <Viewer full>
+    <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+      {/* Status banners */}
+      {loading && <div style={bannerStyle}>Loading TLEs…</div>}
+      {error && <div style={{ ...bannerStyle, color: '#f87171' }}>TLE fetch failed: {error}</div>}
+      {computingHeatmap && <div style={bannerStyle}>Computing 7-day coverage…</div>}
+
+      {/* Toolbar (top-left) */}
+      <Toolbar
+        mode={mode}
+        showHeatmap={showHeatmap}
+        historicalDate={historicalDate}
+        onModeChange={setMode}
+        onHeatmapToggle={() => setShowHeatmap((v) => !v)}
+        onDateChange={setHistoricalDate}
+        onDateReset={() => setHistoricalDate('')}
+      />
+
+      {/* Satellite info panel (top-right) */}
+      {selectedInfo && (
+        <SatelliteInfoPanel
+          info={selectedInfo.info}
+          family={selectedInfo.sp.tle.family}
+          onClose={() => setSelectedInfo(null)}
+        />
+      )}
+
+      {/* Next overpass panel (bottom-left) */}
+      {overpassTarget && (
+        <NextOverpassPanel
+          targetLat={overpassTarget.lat}
+          targetLon={overpassTarget.lon}
+          results={overpassResults}
+          computing={computingOverpass}
+          onClose={() => { setOverpassTarget(null); setOverpassResults([]); }}
+        />
+      )}
+
+      <Viewer full shouldAnimate>
+        {/* Cesium-context components (use useCesium internally) */}
+        <GlobeClickHandler active={mode === 'pickingLocation'} onPick={handleGlobePick} />
+        {historicalDate && <ClockController isoDate={historicalDate} />}
+        <CoverageLayer
+          satellitePositions={satellitePositions}
+          visible={showHeatmap}
+          onComputingChange={setComputingHeatmap}
+        />
+
+        {/* Reference marker */}
         <Entity
           name="Gdańsk"
           position={Cartesian3.fromDegrees(18.6466, 54.352, 100)}
-          point={{ pixelSize: 12, color: { red: 1, green: 0.5, blue: 0, alpha: 1 } as any }}
-          description="Home base"
+          point={{ pixelSize: 8, color: new Color(1, 0.5, 0, 1) }}
+          description="Gdańsk University of Technology"
+        />
+
+        {/* Overpass target pin */}
+        {overpassTarget && (
+          <Entity
+            name="Overpass Target"
+            position={Cartesian3.fromDegrees(overpassTarget.lon, overpassTarget.lat, 0)}
+            point={{
+              pixelSize: 10,
+              color: Color.YELLOW,
+              outlineColor: Color.BLACK,
+              outlineWidth: 2,
+            }}
+            label={{
+              text: '📍',
+              font: '18px sans-serif',
+              style: LabelStyle.FILL,
+              fillColor: Color.WHITE,
+            }}
+          />
+        )}
+
+        {/* Satellites + swaths */}
+        <SatelliteEntities
+          satellitePositions={satellitePositions}
+          onSelect={handleSelectSatellite}
         />
       </Viewer>
     </div>
-  )
+  );
 }
 
-export default App
+const bannerStyle: React.CSSProperties = {
+  position: 'absolute',
+  top: 12,
+  left: '50%',
+  transform: 'translateX(-50%)',
+  background: 'rgba(0,0,0,0.75)',
+  color: '#fff',
+  padding: '6px 14px',
+  borderRadius: 6,
+  fontSize: 13,
+  zIndex: 30,
+  pointerEvents: 'none',
+};

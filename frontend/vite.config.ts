@@ -4,6 +4,12 @@ import cesium from 'vite-plugin-cesium'
 
 export default defineConfig({
   plugins: [react(), cesium()],
+  build: {
+    target: 'esnext',
+  },
+  worker: {
+    format: 'es',
+  },
   server: {
     proxy: {
       '/api': {
