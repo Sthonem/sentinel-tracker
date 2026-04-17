@@ -1,14 +1,20 @@
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 from datetime import datetime, timedelta
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+load_dotenv()
+
+ALLOWED_ORIGIN = os.getenv("ALLOWED_ORIGIN", "http://localhost:5173")
 
 app = FastAPI(title="Sentinel Tracker API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[ALLOWED_ORIGIN],
     allow_methods=["*"],
     allow_headers=["*"],
 )
