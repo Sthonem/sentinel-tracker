@@ -3,7 +3,8 @@ import { useCesium } from 'resium';
 import { SingleTileImageryProvider, Rectangle } from 'cesium';
 import type { ImageryLayer } from 'cesium';
 import type { SatellitePosition } from '../hooks/useSatellitePositions';
-import { computeCoverageGrid, gridToCanvas } from '../lib/coverage';
+import { gridToCanvas } from '../lib/coverage';
+import type { CoverageWorkerRequest, CoverageWorkerResponse } from '../workers/coverage.worker';
 
 interface Props {
   satellitePositions: SatellitePosition[];
@@ -18,34 +19,42 @@ export function CoverageLayer({ satellitePositions, visible, onComputingChange }
   useEffect(() => {
     if (!viewer) return;
 
-    // Remove existing layer whenever visibility or data changes
     if (layerRef.current) {
       viewer.imageryLayers.remove(layerRef.current, true);
       layerRef.current = null;
     }
-
     if (!visible) return;
 
     onComputingChange(true);
 
-    // Defer heavy computation so the loading banner renders first
-    const timerId = setTimeout(() => {
-      const grid = computeCoverageGrid(satellitePositions);
-      const canvas = gridToCanvas(grid);
+    const worker = new Worker(
+      new URL('../workers/coverage.worker.ts', import.meta.url),
+      { type: 'module' },
+    );
 
+    const request: CoverageWorkerRequest = {
+      tles: satellitePositions.map((sp) => sp.tle),
+      days: 7,
+    };
+
+    worker.onmessage = (e: MessageEvent<CoverageWorkerResponse>) => {
+      const canvas = gridToCanvas(e.data.grid);
       const provider = new SingleTileImageryProvider({
         url: canvas.toDataURL(),
         rectangle: Rectangle.fromDegrees(-180, -90, 180, 90),
       });
-
+      if (layerRef.current) viewer.imageryLayers.remove(layerRef.current, true);
       const layer = viewer.imageryLayers.addImageryProvider(provider);
       layer.alpha = 0.65;
       layerRef.current = layer;
       onComputingChange(false);
-    }, 80);
+      worker.terminate();
+    };
+
+    worker.postMessage(request);
 
     return () => {
-      clearTimeout(timerId);
+      worker.terminate();
       if (layerRef.current) {
         viewer.imageryLayers.remove(layerRef.current, true);
         layerRef.current = null;

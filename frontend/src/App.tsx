@@ -22,8 +22,8 @@ import { MobileFallback } from './components/MobileFallback';
 import { Legend } from './components/Legend';
 
 import { computeSatInfo } from './lib/satInfo';
-import { findNextPass } from './lib/overpass';
 import type { OverpassResult } from './lib/overpass';
+import type { OverpassWorkerRequest, OverpassWorkerResponse } from './workers/overpass.worker';
 
 Ion.defaultAccessToken = import.meta.env.VITE_CESIUM_ION_TOKEN as string;
 
@@ -64,18 +64,27 @@ export default function App() {
     if (!overpassTarget || satellitePositions.length === 0) return;
     setComputingOverpass(true);
     setOverpassResults([]);
-    const id = setTimeout(() => {
-      const now = new Date();
-      const results = satellitePositions
-        .map(({ tle, satrec }) =>
-          findNextPass(tle.name, tle.family, satrec, overpassTarget.lat, overpassTarget.lon, now),
-        )
-        .filter((r): r is OverpassResult => r !== null)
-        .sort((a, b) => a.passTime.getTime() - b.passTime.getTime());
-      setOverpassResults(results);
+
+    const worker = new Worker(
+      new URL('./workers/overpass.worker.ts', import.meta.url),
+      { type: 'module' },
+    );
+
+    const request: OverpassWorkerRequest = {
+      tles: satellitePositions.map((sp) => sp.tle),
+      targetLat: overpassTarget.lat,
+      targetLon: overpassTarget.lon,
+      nowMs: Date.now(),
+    };
+
+    worker.onmessage = (e: MessageEvent<OverpassWorkerResponse>) => {
+      setOverpassResults(e.data.results);
       setComputingOverpass(false);
-    }, 0);
-    return () => clearTimeout(id);
+      worker.terminate();
+    };
+
+    worker.postMessage(request);
+    return () => worker.terminate();
   }, [overpassTarget, satellitePositions]);
 
   // ── Coverage heatmap ─────────────────────────────────────────────────────
