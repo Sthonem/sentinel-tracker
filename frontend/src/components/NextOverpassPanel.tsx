@@ -1,6 +1,7 @@
 import type { OverpassResult } from '../lib/overpass';
 import { formatTimeUntil } from '../lib/overpass';
 import type { SatelliteFamily } from '../types/satellite';
+import { useDraggable } from '../hooks/useDraggable';
 
 const FAMILY_COLOR: Record<SatelliteFamily, string> = {
   'SENTINEL-1': '#f97316',
@@ -17,9 +18,17 @@ interface Props {
 
 export function NextOverpassPanel({ targetLat, targetLon, results, computing, onClose }: Props) {
   const now = new Date();
+  const { pos, onMouseDown } = useDraggable(
+    16,
+    typeof window !== 'undefined' ? window.innerHeight - 300 : 500,
+  );
 
   return (
-    <div style={panelStyle}>
+    <div
+      data-draggable
+      onMouseDown={onMouseDown}
+      style={{ ...panelStyle, position: 'fixed', left: pos.x, top: pos.y, bottom: 'unset', cursor: 'grab' }}
+    >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
         <div>
           <div style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 13 }}>📍 Next Overpass</div>
@@ -61,9 +70,6 @@ export function NextOverpassPanel({ targetLat, targetLon, results, computing, on
 }
 
 const panelStyle: React.CSSProperties = {
-  position: 'absolute',
-  bottom: 80,
-  left: 16,
   width: 260,
   background: 'rgba(10, 15, 28, 0.92)',
   backdropFilter: 'blur(8px)',

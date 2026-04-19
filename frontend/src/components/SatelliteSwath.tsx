@@ -45,9 +45,11 @@ interface Props {
   satrec: SatRec;
   family: SatelliteFamily;
   color: Color;
+  /** 0–1 multiplier for swath opacity (default 1) */
+  alpha?: number;
 }
 
-export function SatelliteSwath({ name, satrec, family, color }: Props) {
+export function SatelliteSwath({ name, satrec, family, color, alpha = 1 }: Props) {
   // CallbackProperty satisfies the runtime contract of PositionProperty;
   // the cast is needed because Cesium's TS types don't extend the hierarchy
   // all the way down to CallbackProperty<Cartesian3>.
@@ -80,9 +82,9 @@ export function SatelliteSwath({ name, satrec, family, color }: Props) {
         // CallbackProperty satisfies Property; Cesium accepts it at runtime.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         rotation: rotation as any,
-        material: color.withAlpha(0.13),
+        material: color.withAlpha(0.13 * alpha),
         outline: true,
-        outlineColor: color.withAlpha(0.55),
+        outlineColor: color.withAlpha(0.55 * alpha),
         outlineWidth: 1,
       }}
     />

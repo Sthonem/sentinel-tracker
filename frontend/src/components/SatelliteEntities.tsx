@@ -14,6 +14,7 @@ const FAMILY_COLOR: Record<SatelliteFamily, Color> = {
 interface Props {
   satellitePositions: SatellitePosition[];
   onSelect: (sp: SatellitePosition | null) => void;
+  swathAlpha?: number;
 }
 
 function ClickHandler({ satellitePositions, onSelect }: Props) {
@@ -35,7 +36,7 @@ function ClickHandler({ satellitePositions, onSelect }: Props) {
   return null;
 }
 
-export function SatelliteEntities({ satellitePositions, onSelect }: Props) {
+export function SatelliteEntities({ satellitePositions, onSelect, swathAlpha = 1 }: Props) {
   return (
     <>
       <ClickHandler satellitePositions={satellitePositions} onSelect={onSelect} />
@@ -75,6 +76,7 @@ export function SatelliteEntities({ satellitePositions, onSelect }: Props) {
               satrec={satrec}
               family={tle.family}
               color={color}
+              alpha={swathAlpha}
             />
           </span>
         );

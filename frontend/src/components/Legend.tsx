@@ -1,6 +1,23 @@
+import { useDraggable } from '../hooks/useDraggable';
+
 export function Legend() {
+  const { pos, onMouseDown } = useDraggable(
+    typeof window !== 'undefined' ? window.innerWidth - 200 : 900,
+    typeof window !== 'undefined' ? window.innerHeight - 110 : 500,
+  );
+
   return (
-    <div style={legendStyle}>
+    <div
+      data-draggable
+      onMouseDown={onMouseDown}
+      style={{
+        ...legendStyle,
+        position: 'fixed',
+        left: pos.x,
+        top: pos.y,
+        cursor: 'grab',
+      }}
+    >
       <div style={rowStyle}>
         <span style={{ ...dotStyle, background: '#f97316' }} />
         <span style={nameStyle}>Sentinel-1</span>
@@ -16,9 +33,6 @@ export function Legend() {
 }
 
 const legendStyle: React.CSSProperties = {
-  position: 'absolute',
-  bottom: 50,
-  right: 16,
   background: 'rgba(10, 15, 28, 0.85)',
   backdropFilter: 'blur(6px)',
   border: '1px solid rgba(255,255,255,0.1)',
@@ -28,7 +42,8 @@ const legendStyle: React.CSSProperties = {
   flexDirection: 'column',
   gap: 7,
   zIndex: 20,
-  pointerEvents: 'none',
+  pointerEvents: 'auto',
+  userSelect: 'none',
 };
 
 const rowStyle: React.CSSProperties = {

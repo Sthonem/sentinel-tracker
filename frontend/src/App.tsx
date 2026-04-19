@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Viewer, Entity } from 'resium';
-import { Cartesian3, Color, Ion, JulianDate, LabelStyle } from 'cesium';
+import { Cartesian3, Cartesian2, Color, Ion, JulianDate, LabelStyle } from 'cesium';
 import 'cesium/Build/Cesium/Widgets/widgets.css';
 
 import { useSatellites } from './hooks/useSatellites';
@@ -10,7 +10,7 @@ import type { SatellitePosition } from './hooks/useSatellitePositions';
 import { SatelliteEntities } from './components/SatelliteEntities';
 import { SatelliteInfoPanel, SatelliteInfoHint } from './components/SatelliteInfoPanel';
 import { Toolbar } from './components/Toolbar';
-import type { AppMode } from './components/Toolbar';
+import type { AppMode, FamilyFilter } from './components/Toolbar';
 import { NextOverpassPanel } from './components/NextOverpassPanel';
 import { GlobeClickHandler } from './components/GlobeClickHandler';
 import { ClockController } from './components/ClockController';
@@ -94,8 +94,22 @@ export default function App() {
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [computingHeatmap, setComputingHeatmap] = useState(false);
 
+  // ── Family filter ─────────────────────────────────────────────────────────
+  const [filterFamily, setFilterFamily] = useState<FamilyFilter>('all');
+
+  // ── Swath opacity ─────────────────────────────────────────────────────────
+  const [swathAlpha, setSwathAlpha] = useState(1);
+
+  // ── Gdańsk marker ────────────────────────────────────────────────────────
+  const [showGdansk, setShowGdansk] = useState(true);
+
   // ── Historical mode ───────────────────────────────────────────────────────
   const [historicalDate, setHistoricalDate] = useState('');
+
+  // ── Derived: filtered satellite list ─────────────────────────────────────
+  const filteredPositions = filterFamily === 'all'
+    ? satellitePositions
+    : satellitePositions.filter((sp) => sp.tle.family === filterFamily);
 
   // ── Render ────────────────────────────────────────────────────────────────
   if (error) return <ErrorScreen message={error} onRetry={refetch} />;
@@ -115,10 +129,16 @@ export default function App() {
         mode={mode}
         showHeatmap={showHeatmap}
         historicalDate={historicalDate}
+        filterFamily={filterFamily}
+        swathAlpha={swathAlpha}
+        showGdansk={showGdansk}
         onModeChange={setMode}
         onHeatmapToggle={() => setShowHeatmap((v) => !v)}
         onDateChange={setHistoricalDate}
         onDateReset={() => setHistoricalDate('')}
+        onFilterChange={setFilterFamily}
+        onSwathAlphaChange={setSwathAlpha}
+        onGdanskToggle={() => setShowGdansk((v) => !v)}
       />
 
       {selectedInfo ? (
@@ -148,17 +168,28 @@ export default function App() {
         <GlobeClickHandler active={mode === 'pickingLocation'} onPick={handleGlobePick} />
         {historicalDate && <ClockController isoDate={historicalDate} />}
         <CoverageLayer
-          satellitePositions={satellitePositions}
+          satellitePositions={filteredPositions}
           visible={showHeatmap}
           onComputingChange={setComputingHeatmap}
         />
 
-        <Entity
-          name="Gdańsk"
-          position={Cartesian3.fromDegrees(18.6466, 54.352, 100)}
-          point={{ pixelSize: 8, color: new Color(1, 0.5, 0, 1) }}
-          description="Gdańsk University of Technology"
-        />
+        {showGdansk && (
+          <Entity
+            name="Gdańsk"
+            position={Cartesian3.fromDegrees(18.6466, 54.352, 100)}
+            point={{ pixelSize: 8, color: new Color(1, 0.5, 0, 1) }}
+            label={{
+              text: 'PG',
+              font: '11px sans-serif',
+              fillColor: Color.WHITE,
+              outlineColor: Color.BLACK,
+              outlineWidth: 2,
+              style: LabelStyle.FILL_AND_OUTLINE,
+              pixelOffset: new Cartesian2(0, -18),
+            }}
+            description="Gdańsk University of Technology"
+          />
+        )}
 
         {overpassTarget && (
           <Entity
@@ -180,8 +211,9 @@ export default function App() {
         )}
 
         <SatelliteEntities
-          satellitePositions={satellitePositions}
+          satellitePositions={filteredPositions}
           onSelect={handleSelectSatellite}
+          swathAlpha={swathAlpha}
         />
       </Viewer>
     </div>
