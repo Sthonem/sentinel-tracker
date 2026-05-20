@@ -1,15 +1,14 @@
-# Sentinel Tracker PG
+# Sentinel Tracker
 
 > Real-time 3D visualization of ESA Sentinel-1 and Sentinel-2 satellite constellations.
 
-Academic project for the **Geographic Information Systems** course at  
-**Gdańsk University of Technology (Politechnika Gdańska)** — 2025/2026.
+A personal side project exploring orbit propagation, satellite swath geometry, and real-time 3D rendering in the browser.
 
 ---
 
 ## Overview
 
-Sentinel Tracker PG renders the current and near-future positions of all active  
+Sentinel Tracker renders the current and near-future positions of all active  
 Sentinel-1 (C-band SAR) and Sentinel-2 (Multispectral Imager) satellites on an  
 interactive 3D globe powered by CesiumJS. Orbit propagation is performed locally  
 in the browser using SGP4 via **satellite.js v7**, with TLE data served by a  
@@ -26,6 +25,7 @@ lightweight FastAPI backend that caches CelesTrak queries for six hours.
 | 🗺️ 7-day coverage map | Canvas heatmap showing cumulative ground coverage, computed in a Web Worker |
 | 📍 Next overpass | Click any point on the globe to find the next satellite pass time & duration |
 | 🕑 Historical replay | Scrub to any past date to replay orbital positions |
+| 🎛️ Family filter & opacity | Filter by Sentinel-1 / Sentinel-2 and adjust swath transparency |
 | ⚠️ Stale TLE banner | Automatic warning when TLE data is older than 24 hours |
 | 📱 Mobile guard | Overlay notifying mobile users the app is desktop-optimised |
 | 🔄 Auto-retry | Error screen with backend health link and one-click retry |
@@ -50,7 +50,7 @@ lightweight FastAPI backend that caches CelesTrak queries for six hours.
 ## Repository Structure
 
 ```
-sentinel-tracker-pg/
+sentinel-tracker/
 ├── backend/
 │   ├── main.py              # FastAPI app — /api/satellites endpoint
 │   ├── requirements.txt     # Python dependencies
@@ -68,7 +68,7 @@ sentinel-tracker-pg/
 │   ├── .env.example         # Frontend environment variable template
 │   ├── vite.config.ts
 │   └── tsconfig.app.json
-├── docs/                    # Additional documentation & screenshots
+├── docs/                    # Screenshots and additional documentation
 ├── USAGE.md                 # Quick-start guide (English)
 ├── KULLANIM.md              # Quick-start guide (Turkish / Türkçe)
 ├── NOTES.md                 # Technical decisions & known issues
@@ -109,15 +109,9 @@ Open **http://localhost:5173** in your browser.
 
 ---
 
-## Team
+## Author
 
-| Name | Student ID | Role |
-|---|---|---|
-| Erdem Aslan | s212135 | Full-stack development, architecture |
-| Sinem Aktas | s212133 | Frontend development, UI/UX |
-
-**Supervisor:** Mr. Michał Kassjański  
-**Course:** Geographic Information Systems — Gdańsk University of Technology
+Built by **Erdem Aslan**.
 
 ---
 

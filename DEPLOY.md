@@ -1,4 +1,4 @@
-# Deployment Guide — Sentinel Tracker PG
+# Deployment Guide — Sentinel Tracker
 
 This guide covers deploying the backend to **Render** (free tier) and the frontend  
 to **Netlify** (free tier). Other platforms (Railway, Heroku, Vercel) work similarly.
@@ -28,7 +28,7 @@ to **Netlify** (free tier). Other platforms (Railway, Heroku, Vercel) work simil
 
    | Key | Value |
    |---|---|
-   | `ALLOWED_ORIGIN` | Your Netlify frontend URL, e.g. `https://sentinel-tracker-pg.netlify.app` |
+   | `ALLOWED_ORIGIN` | Your Netlify frontend URL, e.g. `https://sentinel-tracker.netlify.app` |
 
 5. Click **Create Web Service**. Render builds and deploys automatically.
 6. Note the service URL (e.g. `https://sentinel-tracker-api.onrender.com`) — you need it for the frontend.

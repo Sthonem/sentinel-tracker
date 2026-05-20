@@ -96,7 +96,7 @@ export function Toolbar({
       <button
         onClick={onGdanskToggle}
         style={btnStyle(showGdansk)}
-        title="Toggle Gdańsk University of Technology marker on the globe"
+        title="Toggle Gdańsk city marker on the globe"
         aria-pressed={showGdansk}
       >
         🏛️ Gdańsk

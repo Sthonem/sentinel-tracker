@@ -179,7 +179,7 @@ export default function App() {
             position={Cartesian3.fromDegrees(18.6466, 54.352, 100)}
             point={{ pixelSize: 8, color: new Color(1, 0.5, 0, 1) }}
             label={{
-              text: 'PG',
+              text: 'Gdańsk',
               font: '11px sans-serif',
               fillColor: Color.WHITE,
               outlineColor: Color.BLACK,
@@ -187,7 +187,7 @@ export default function App() {
               style: LabelStyle.FILL_AND_OUTLINE,
               pixelOffset: new Cartesian2(0, -18),
             }}
-            description="Gdańsk University of Technology"
+            description="Gdańsk, Poland"
           />
         )}
 

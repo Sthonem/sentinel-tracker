@@ -1,4 +1,4 @@
-# Technical Notes — Sentinel Tracker PG
+# Technical Notes — Sentinel Tracker
 
 Developer notes, design decisions, known limitations, and lessons learned.
 

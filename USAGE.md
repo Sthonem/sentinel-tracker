@@ -1,4 +1,4 @@
-# Usage Guide — Sentinel Tracker PG
+# Usage Guide — Sentinel Tracker
 
 ## Prerequisites
 
@@ -17,8 +17,8 @@ You also need a **free Cesium Ion account** to obtain an access token:
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-org/sentinel-tracker-pg.git
-cd sentinel-tracker-pg
+git clone https://github.com/Sthonem/sentinel-tracker.git
+cd sentinel-tracker
 ```
 
 ---

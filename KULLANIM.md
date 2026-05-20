@@ -1,4 +1,4 @@
-# Kullanım Kılavuzu — Sentinel Tracker PG
+# Kullanım Kılavuzu — Sentinel Tracker
 
 ## Ön Gereksinimler
 
@@ -17,8 +17,8 @@ Ayrıca erişim jetonu almak için ücretsiz bir **Cesium Ion hesabı** gereklid
 ## 1. Depoyu Klonlama
 
 ```bash
-git clone https://github.com/your-org/sentinel-tracker-pg.git
-cd sentinel-tracker-pg
+git clone https://github.com/Sthonem/sentinel-tracker.git
+cd sentinel-tracker
 ```
 
 ---
