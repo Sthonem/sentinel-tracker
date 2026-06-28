@@ -15,6 +15,7 @@ import { NextOverpassPanel } from './components/NextOverpassPanel';
 import { GlobeClickHandler } from './components/GlobeClickHandler';
 import { ClockController } from './components/ClockController';
 import { CoverageLayer } from './components/CoverageLayer';
+import { ViewerSetup } from './components/ViewerSetup';
 import { LoadingOverlay } from './components/LoadingOverlay';
 import { ErrorScreen } from './components/ErrorScreen';
 import { StaleTLEBanner } from './components/StaleTLEBanner';
@@ -165,6 +166,7 @@ export default function App() {
       <Legend />
 
       <Viewer full shouldAnimate>
+        <ViewerSetup />
         <GlobeClickHandler active={mode === 'pickingLocation'} onPick={handleGlobePick} />
         {historicalDate && <ClockController isoDate={historicalDate} />}
         <CoverageLayer
