@@ -12,7 +12,7 @@ export function MobileFallback() {
         <div style={{ fontSize: 48, marginBottom: 16 }}>🖥️</div>
         <h2 style={headingStyle}>Best viewed on desktop</h2>
         <p style={msgStyle}>
-          Sentinel Tracker PG is a 3D globe application optimised for larger screens.
+          Sentinel Tracker is a 3D globe application optimised for larger screens.
           On a small display the controls may overlap and performance may suffer.
         </p>
         <button onClick={() => setDismissed(true)} style={btnStyle}>
